@@ -26,12 +26,7 @@ void loop()
     flag = 1;
     }  
 
-
-  if (!flag){
-
-      delay(10);
-      //Serial.print("There is delay");
-    }
+  delay(100);
 
   /*else{
 
