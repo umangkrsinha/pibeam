@@ -119,7 +119,7 @@ void loop()
 
   Setpoint = graphTable[counter];
   //change delay to adjust cycling speed:
-  delay(1);
+  delay(10);
   
   Input = Output;
 }
