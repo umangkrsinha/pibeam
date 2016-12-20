@@ -54,7 +54,7 @@ void loop()
 
   if (myPID.Compute()){ 
 
-     Output = (Output*angSpeed)/I*e; //extracting V from output
+     Output = (Output*angSpeed)/(I*e); //extracting V from output
      
      convertVandSend(Output);
 

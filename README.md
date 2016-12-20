@@ -1,6 +1,3 @@
-# pibeam
-Hall sensor and PID code for motor microcontroller 
+# Pi Beam Labs
 
-Add who is working on what after deciding and add in the readme file.
-
-Start Working!!!
+Hall sensor and PID code for motor microcontroller.
