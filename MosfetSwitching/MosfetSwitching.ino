@@ -1,7 +1,8 @@
 
-const int a_m= ,b_m= ,c_m= ,A_m= ,B_m= ,C_m= ; //ports for mosfet
-const int a_h= ,b_h= ,c_h= ; //ports for hallsensor inputs
-int hall;     // holds hall sensor inputs
+const int a_m = 0, b_m = 0, c_m = 0, A_m = 0, B_m = 0, C_m = 0; //ports for mosfet
+const int a_h = 0, b_h = 0,c_h = 0; //ports for hallsensor inputs
+int a, b, c, A, B, C;
+int hall = 0;     // holds hall sensor inputs
 void setup() {
   // put your setup code here, to run once:
   pinMode(a_m, OUTPUT);  //mosfet output ports
