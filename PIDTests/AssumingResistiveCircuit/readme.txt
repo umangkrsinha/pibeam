@@ -1,3 +1,9 @@
+Description:
+
+	The torque by the pedellar is varied on a sinusoid, efficiency is assumed to be 100% and some if statements were added to deal with border cases.
+
+	We can see that the Output of the PID which tries to vary on a sine curve.
+
 Status of the test :-
 
 	PID speed was good enough although there are a few things to note:
