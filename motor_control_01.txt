@@ -1,18 +1,22 @@
-
-
+/*
+        still have to assign pins in arduino
+ 
+ */
 #include <PID_v1.h>
 
-double kp = .5, ki = 1, kd = 0; //PID variables and constants    NEED TO FIND NEW VALUES(IF NEEDED)
+double kp = 0.5, ki = 1, kd = 0; //PID variables and constants    NEED TO FIND NEW VALUES(IF NEEDED)
 double motorTorque; //torque in motor(PID INPUT)
 double torquePedal; //torque supplied by the pedlar (from torque sensor)(PID SETPOINT)
 double PWM;         //PWM(PID OUTPUT)
+int ON,OFF;         //ON time and Off time for PWM 
 
 double inT=0,finT=0; //holds time for the function
-const int pinc=/*value*/,pins=/*value*/,pinT=/*value*/,pinI=/*value*/;
+const int pinc=0/*value*/,pins=0/*value*/,pinT=0/*value*/,pinI=0/*value*/;  // pins for sine, cosine(speed calculation from torque sensor), torque sensor ,current(current sensor) !! GIVE VALUES
 int sine,cosine;
+int count;
 
 int ival;
-float RPMf(ival) //function for angular speed
+float RPMf(int ival) //function for angular speed
 {
  sine=digitalRead(pins);
  cosine=digitalRead(pinc);
@@ -23,7 +27,7 @@ if(sine+cosine!=ival)
   finT=millis();
   //degpsec=(90/8)/(finT-inT);
   //RPM=degpsec/360;
-  return (1/(32.0*(finT-inT));
+  return (1/(32*(finT-inT)));
 } 
 else 
 {
@@ -48,18 +52,40 @@ float angSpeed; //angSpeed is angular speed of the motor,
 float V=48, I; //V and I are avg of qualtities supplied to the motor
 float e,esum; //e is instantanious efficiency of motor from efficiency table
 
-const int a_m = 0, b_m = 0, c_m = 0, A_m = 0, B_m = 0, C_m = 0; //ports for mosfet(a,b,c need PWM)    GIVE VALUES
+const int a_m = 0, b_m = 0, c_m = 0, A_m = 0, B_m = 0, C_m = 0; // ports for mosfet(a,b,c need PWM)   !!! GIVE VALUES !!!  A,B&C are high side mosfet logic
 const int a_h = 0, b_h = 0,c_h = 0; //ports for hallsensor inputs
 int a, b, c, A, B, C;
-int hall = 0;     // holds hall sensor inputs
-
+int hall;     // holds hall sensor inputs
+float r = 2*3.14159265/60;    //this is for converting units of angSpeed from RPM to red/s (torque calculation)
+ 
  // efficiency chart
-float Ival[60]={};
-float ASval[60]={};
-float Eval[60]={};
-float Vval[60]={},vsum;
+ 
+float Ival[60]={0.667  ,    0.716  ,    0.774  ,    0.838   ,   0.932  ,    1.054  ,    1.200  ,    1.379  ,    1.563 ,     1.775,
+     2.027   ,   2.287  ,    2.567  ,    2.871  ,    3.194   ,   3.513  ,    3.866    ,  4.235   ,   4.596   ,   4.990,
+     5.304   ,   5.675  ,    6.070  ,    6.455  ,    6.857   ,   7.273  ,    7.687    ,  8.101   ,   8.505   ,   8.923,
+     9.355   ,   9.766  ,   10.190  ,   10.610  ,   11.050   ,  11.480   ,  11.900   ,  12.330  ,   12.760  ,   13.160,
+    13.290   ,  13.570  ,   13.820  ,   13.950  ,   14.050   ,  14.090  ,   14.200   ,  14.330  ,   14.380  ,   14.500,
+    14.490   ,  14.590  ,   14.640  ,   14.720  ,   14.760   ,  14.800   ,  14.880   ,  14.910  ,   14.820   ,  14.890};
+float ASval[60]={243.000 ,   243.000  ,  243.000  ,  242.000 ,   242.000  ,  241.000  ,  240.000  ,  240.000  ,  239.000  ,  238.000,
+   237.000  ,  236.000   , 234.000  ,  233.000  ,  232.000  ,  230.000  ,  229.000 ,   227.000  ,  226.000  ,  224.000,
+   222.000  ,  221.000  ,  220.000  ,  217.000  ,  216.000  ,  214.000  ,  214.000  ,  212.000 ,   210.000 ,   208.000,
+   207.000  ,  204.000  ,  203.000  ,  202.000  ,  200.000  ,  198.000  ,  197.000  ,  195.000 ,   193.000 ,   191.000,
+   184.000 ,   180.000  ,  176.000   , 170.000   , 164.000  ,  159.000  ,  153.000 ,   148.000   , 141.000  ,  135.000,
+   128.000  ,  122.000   , 116.000   , 110.000   , 105.000   , 100.000  ,   96.000 ,    91.000   ,  85.000  ,   80.000};
+float Eval[60]={1.300   ,   1.000   ,   1.600  ,   11.300  ,   20.600   ,  29.200  ,   38.900   ,  45.500   ,  52.900   ,  58.200,
+    62.900   ,  66.600  ,   69.700  ,   72.400  ,   74.400  ,   76.700  ,   77.900   ,  78.600  ,   79.800  ,   79.800,
+    81.200   ,  81.800   ,  82.300  ,   82.000  ,   82.300  ,   82.100  ,   82.700  ,   82.200  ,   82.000   ,  81.900,
+    81.600   ,  80.600   ,  80.500  ,   80.400  ,   79.900  ,   79.000  ,   79.000  ,   78.200  ,   77.700   ,  77.000,
+    76.200   ,  75.500   ,  74.600  ,   73.500  ,   72.600 ,    71.900  ,   70.600  ,   69.300   ,  68.000  ,   66.700,
+    65.100   ,  63.400   ,  61.700  ,   59.700  ,   58.100 ,    56.400  ,   55.100  ,   53.100   ,  50.900  ,   48.400};
+float Vval[60]={     48.080  ,   48.080 ,    48.080    , 48.080    , 48.080   ,  48.080,     48.080    , 48.080   ,  48.080,     48.080,
+    48.080,     48.080 ,    48.080  ,   48.080  ,   48.080  ,   48.080    , 48.080 ,    48.080 ,    48.080 ,    48.080,
+    48.100   ,  48.100   ,  48.100    , 48.100    , 48.100    , 48.100  ,   48.100  ,   48.110   ,  48.110  ,   48.110,
+    48.110   ,  48.110 ,    48.110 ,    48.110   ,  48.120    , 48.120     ,48.120     ,48.110    , 48.110  ,   48.120,
+    48.110 ,    48.110 ,    48.090  ,   48.070  ,   48.050    , 48.040 ,    48.040  ,   48.040  ,   48.040  ,   48.070,
+    48.110  ,   48.110  ,   48.110  ,   48.110  ,   48.120  ,   48.110   ,  48.110   ,  48.110  ,   48.120 ,    48.090},vsum;
 
-int P[60],k,j;
+int P[60],k,j; //variables for finding efficiency from chart
 
 void setup()
 {
@@ -98,7 +124,7 @@ void loop()
  k=0;
  for(j=0;j<60;j++)
  {
-  if((Ival[j]-I</*value*/)&&(I-Ival[j]</*value*/))                            // PUT VALUES
+  if((Ival[j]-I<0/*value*/)&&(I-Ival[j]<0/*value*/))                            // PUT VALUES
   {
     P[k]=j;
     k++;
@@ -107,7 +133,7 @@ void loop()
  count=k;k=0;esum=0;vsum=0;
  for(j=0;j<count;j++)
  {
-  if((ASval[P[j]]-angSpeed</*value*/)&&(angSpeed-ASval[P[j]]</*value*/))       //  PUT VALUES
+  if((ASval[P[j]]-angSpeed<0/*value*/)&&(angSpeed-ASval[P[j]]<0/*value*/))       //  PUT VALUES
   {
     esum = esum + Eval[P[j]];
     vsum = vsum + Vval[P[j]];
@@ -116,11 +142,10 @@ void loop()
  }
  V = vsum/k;
  e = esum/k;
- motorTorque=V*I*e/angSpeed;
+ motorTorque=V*I*e/(r*angSpeed*100);
  
- if (myPID.Compute()){ 
-    //area for testing
-   }
+ myPID.Compute(); // PID 
+
  if (torquePedal=0)PWM=0; //takes care of case when pedal_torque=0
    
  hall=digitalRead(a_h);           // hall sensor value is stored
@@ -128,6 +153,9 @@ void loop()
  hall=10*hall+digitalRead(c_h);
 
  // switching
+
+ ON = (100*PWM)/256;
+ OFF = (100*(256-PWM))/256;
 
  if(hall==101)  //step1
   {
@@ -154,14 +182,39 @@ void loop()
     a=0;A=0;b=0;B=1;c=1;C=0;
   }
 
- analogWrite(a_m, 0);
- analogWrite(b_m, 0);
- analogWrite(c_m, 0);
- digitalWrite(A_m, A);
- digitalWrite(B_m, B);
- digitalWrite(C_m, C);
- if (a==1) analogWrite(a_m, PWM);
- if (b==1) analogWrite(b_m, PWM);
- if (c==1) analogWrite(c_m, PWM);
+ digitalWrite(a_m, a);
+ digitalWrite(b_m, b);
+ digitalWrite(c_m, c);
+ digitalWrite(A_m, 0);
+ digitalWrite(B_m, 0);
+ digitalWrite(C_m, 0);
+ if (A==1) 
+  {
+    digitalWrite(a_m, 0);
+    digitalWrite(A_m, 1);
+    delayMicroseconds(ON);
+    digitalWrite(a_m, 1);
+    digitalWrite(A_m, 0);
+    delayMicroseconds(OFF);
+  }
+ if (B==1)
+  {
+    digitalWrite(b_m, 0);
+    digitalWrite(B_m, 1);
+    delayMicroseconds(ON);
+    digitalWrite(b_m, 1);
+    digitalWrite(B_m, 0);
+    delayMicroseconds(OFF);
+  }
+ if (C==1)
+  {
+    digitalWrite(c_m, 0);
+    digitalWrite(C_m, 1);
+    delayMicroseconds(ON);
+    digitalWrite(c_m, 1);
+    digitalWrite(C_m, 0);
+    delayMicroseconds(OFF);
+  }
 
 }
+
